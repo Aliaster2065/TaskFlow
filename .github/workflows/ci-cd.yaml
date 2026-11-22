@@ -1,0 +1,45 @@
+
+name: TaskFlow CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run automated tests
+        run: npm test
+
+      - name: Package application
+        run: |
+          mkdir -p dist/database
+          cp -r src public package.json package-lock.json dist/
+          cp database/.gitkeep dist/database/
+          cd dist
+          zip -r ../taskflow.zip .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskflow-build
+          path: taskflow.zip
